@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Assistant Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif}
+body{
+height:100vh;overflow:hidden;display:flex;justify-content:center;align-items:center;
+background:linear-gradient(-45deg,#0f172a,#1e3a8a,#06b6d4,#7c3aed);
+background-size:400% 400%;animation:bg 12s ease infinite;
+}
+@keyframes bg{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+
+.particles span{
+position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;opacity:.35;
+animation:float 16s linear infinite;
+}
+@keyframes float{from{transform:translateY(100vh)}to{transform:translateY(-120vh)}}
+
+.container{
+width:min(1100px,92vw);height:680px;
+background:rgba(255,255,255,.08);backdrop-filter:blur(16px);
+border-radius:30px;border:1px solid rgba(255,255,255,.2);
+display:flex;overflow:hidden;color:white;
+}
+
+.left,.right{flex:1}
+.left{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px}
+.right{display:flex;justify-content:center;align-items:center;padding:30px}
+
+.robot{position:relative;animation:hoverbot 3s ease-in-out infinite}
+@keyframes hoverbot{50%{transform:translateY(-12px)}}
+
+.head{
+width:150px;height:140px;background:white;border-radius:28px;position:relative;
+}
+.eye{
+width:20px;height:20px;background:#00ffff;border-radius:50%;
+position:absolute;top:45px;animation:blink 4s infinite;
+}
+.eye.left{left:35px}.eye.right{right:35px}
+@keyframes blink{0%,95%,100%{height:20px}97%{height:2px}}
+
+.mouth{
+width:50px;height:8px;background:#00ffff;border-radius:10px;
+position:absolute;left:50px;bottom:30px;
+}
+.speaking .mouth{animation:talk .18s infinite alternate}
+@keyframes talk{from{height:8px}to{height:20px}}
+
+.body{
+width:100px;height:120px;background:white;border-radius:20px;margin:10px auto 0;
+}
+.arm{
+position:absolute;width:18px;height:80px;background:white;top:155px;border-radius:20px;
+}
+.arm.left{left:-20px;transform-origin:top center}
+.arm.right{right:-20px;transform-origin:top center}
+.wave .arm.right{animation:wave 1s ease 3}
+@keyframes wave{50%{transform:rotate(-35deg)}}
+
+.status{margin-top:20px;padding:8px 18px;border-radius:20px;background:rgba(255,255,255,.15)}
+.msg{margin-top:20px;text-align:center;font-size:22px}
+
+.card{
+width:100%;max-width:420px;background:rgba(255,255,255,.1);
+padding:35px;border-radius:24px
+}
+.card h1{text-align:center;margin-bottom:25px}
+label{display:block;margin:10px 0 6px}
+input{
+width:100%;padding:14px;border:none;border-radius:12px;font-size:15px
+}
+button{
+width:100%;padding:14px;border:none;border-radius:12px;color:white;
+font-weight:bold;cursor:pointer;margin-top:12px
+}
+.voice{background:#0891b2}
+.continue{background:linear-gradient(45deg,#06b6d4,#3b82f6)}
+button:hover{transform:scale(1.03)}
+#message{text-align:center;margin-top:12px}
+.loader{display:none;margin-top:10px;text-align:center}
+
+@media(max-width:900px){
+.container{flex-direction:column;height:auto;max-height:95vh;overflow:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="particles">
+<span style="left:5%"></span><span style="left:15%;animation-delay:2s"></span>
+<span style="left:25%;animation-delay:4s"></span><span style="left:35%;animation-delay:1s"></span>
+<span style="left:45%;animation-delay:3s"></span><span style="left:55%;animation-delay:5s"></span>
+<span style="left:65%;animation-delay:2s"></span><span style="left:75%;animation-delay:4s"></span>
+<span style="left:85%;animation-delay:1s"></span><span style="left:95%;animation-delay:3s"></span>
+</div>
+
+<div class="container">
+<div class="left">
+<div class="robot wave" id="robot">
+<div class="head">
+<div class="eye left"></div>
+<div class="eye right"></div>
+<div class="mouth"></div>
+</div>
+<div class="arm left"></div>
+<div class="arm right"></div>
+<div class="body"></div>
+</div>
+<div class="status" id="status">Idle</div>
+<div class="msg">🤖 Welcome to AI Assistant</div>
+</div>
+
+<div class="right">
+<div class="card">
+<h1>Login</h1>
+
+<label>Name</label>
+<input id="name" type="text" placeholder="Enter Your Name" onclick="speakText('Please enter your full name')">
+
+<label>Email</label>
+<input id="email" type="email" placeholder="Enter Your Email" onclick="speakText('Please enter a valid email address')">
+
+<label>Phone Number</label>
+<input id="phone" type="tel" placeholder="Enter Phone Number" onclick="speakText('Please enter your ten digit mobile number')">
+
+<button class="voice" onclick="startVoice()">🎤 Use Voice Input</button>
+<button class="continue" onmouseover="speakText('Click continue to proceed')" onclick="validateForm()">Continue</button>
+
+<div id="message"></div>
+<div class="loader" id="loader">🤖 Processing...</div>
+</div>
+</div>
+</div>
+
+<script>
+const robot=document.getElementById('robot');
+const statusBox=document.getElementById('status');
+
+function speakText(text){
+speechSynthesis.cancel();
+robot.classList.add('speaking');
+statusBox.innerText='Speaking';
+const s=new SpeechSynthesisUtterance(text);
+s.onend=()=>{robot.classList.remove('speaking');statusBox.innerText='Idle';};
+speechSynthesis.speak(s);
+}
+
+window.onload=()=>{
+setTimeout(()=>robot.classList.remove('wave'),3000);
+speakText('Hello. Welcome to AI Assistant. Please enter your name, email and phone number. You can also use voice commands.');
+}
+
+function startVoice(){
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){alert('Voice recognition not supported');return;}
+const rec=new SR();
+statusBox.innerText='Listening';
+rec.start();
+
+rec.onresult=(e)=>{
+let t=e.results[0][0].transcript.toLowerCase();
+
+if(t.includes('my name is'))
+document.getElementById('name').value=t.replace('my name is','').trim();
+
+else if(t.includes('email'))
+document.getElementById('email').value=t.replace('my email is','').trim();
+
+else if(t.includes('phone'))
+document.getElementById('phone').value=t.replace(/\D/g,'');
+
+else if(t.includes('continue'))
+validateForm();
+
+statusBox.innerText='Idle';
+};
+
+rec.onerror=()=>statusBox.innerText='Idle';
+}
+
+function validateForm(){
+const name=document.getElementById('name').value.trim();
+const email=document.getElementById('email').value.trim();
+const phone=document.getElementById('phone').value.trim();
+const msg=document.getElementById('message');
+
+if(!name){msg.innerHTML='❌ Please enter your name';return;}
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.innerHTML='❌ Enter valid email';return;}
+if(phone.length<10){msg.innerHTML='❌ Enter valid phone number';return;}
+
+msg.innerHTML='✅ Details Verified';
+document.getElementById('loader').style.display='block';
+
+speakText('Thank you. Your details have been verified successfully. Redirecting to dashboard.');
+
+setTimeout(()=>{
+alert('Login Successful!');
+},2500);
+}
+</script>
+</body>
+</html>
